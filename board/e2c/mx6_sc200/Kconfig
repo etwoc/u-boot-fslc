@@ -1,0 +1,12 @@
+if TARGET_MX6_SC200
+
+config SYS_BOARD
+	default "mx6_sc200"
+
+config SYS_VENDOR
+	default "e2c"
+
+config SYS_CONFIG_NAME
+	default "mx6_sc200"
+
+endif

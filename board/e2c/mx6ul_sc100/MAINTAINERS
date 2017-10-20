@@ -1,0 +1,7 @@
+SC100 BOARD
+M:	Ian Craig <ian@etwoc.com>
+S:	Maintained
+F:	board/e2c/mx6ul_sc100/
+F:	include/configs/mx6ul_sc100.h
+F:	configs/mx6ul_sc100_defconfig
+

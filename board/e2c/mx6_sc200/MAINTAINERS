@@ -1,0 +1,6 @@
+SC200 BOARD
+M:	Ian Craig <ian@etwoc.com>
+S:	Maintained
+F:	board/e2c/mx6_sc200/
+F:	include/configs/mx6_sc200.h
+F:	configs/mx6_sc200_defconfig
