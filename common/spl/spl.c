@@ -7,6 +7,7 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
+#define DEBUG
 #include <common.h>
 #include <dm.h>
 #include <spl.h>
@@ -316,7 +317,7 @@ static int spl_load_image(struct spl_image_info *spl_image,
 			  struct spl_image_loader *loader)
 {
 	struct spl_boot_device bootdev;
-
+	puts("SPL:spl_load_image()\n");
 	bootdev.boot_device = loader->boot_device;
 	bootdev.boot_device_name = NULL;
 

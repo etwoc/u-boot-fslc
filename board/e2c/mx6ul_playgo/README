@@ -1,0 +1,30 @@
+How to use U-Boot on e2c MX6UL SC100
+-----------------------------------------------
+
+- Build U-Boot for MX6UL SC100:
+
+$ make mrproper
+$ make mx6ul_sc100_defconfig
+$ make
+
+This will generate the SPL image called SPL and the u-boot.img.
+
+- Flash the SPL image into the micro SD card:
+
+sudo dd if=SPL of=/dev/mmcblk0 bs=1k seek=1; sync
+
+- Flash the u-boot.img image into the micro SD card:
+
+sudo dd if=u-boot.img of=/dev/mmcblk0 bs=1k seek=69; sync
+
+- Jumper settings:
+
+SW1: 0 0 1 0 0 0 1 0
+
+where 0 means bottom position and 1 means top position (from the
+switch label numbers reference).
+
+- Connect the console cable
+
+- Insert the micro SD card in the board, power it up and U-Boot messages should
+come up.

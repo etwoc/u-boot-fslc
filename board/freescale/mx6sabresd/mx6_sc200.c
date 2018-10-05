@@ -32,7 +32,6 @@
 #include "../common/pfuze.h"
 #include <usb.h>
 #include <usb/ehci-ci.h>
-#include <micrel.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -183,7 +182,8 @@ static void setup_iomux_uart(void)
 }
 
 #ifdef CONFIG_FSL_ESDHC
-struct fsl_esdhc_cfg usdhc_cfg[2] = {	
+struct fsl_esdhc_cfg usdhc_cfg[3] = {
+	
 	{USDHC3_BASE_ADDR},
 	{USDHC4_BASE_ADDR},
 };
@@ -204,12 +204,13 @@ int board_mmc_getcd(struct mmc *mmc)
 	switch (cfg->esdhc_base) {
 
 	case USDHC3_BASE_ADDR:
-		ret = 1; /* !gpio_get_value(USDHC3_CD_GPIO); */
+		ret = !gpio_get_value(USDHC3_CD_GPIO);
 		break;
 	case USDHC4_BASE_ADDR:
 		ret = 1; /* eMMC/uSDHC4 is always present */
 		break;
 	}
+
 	return ret;
 }
 
@@ -231,11 +232,11 @@ int board_mmc_init(bd_t *bis)
 		case 0:
 			SETUP_IOMUX_PADS(usdhc3_pads);
 			gpio_direction_input(USDHC3_CD_GPIO);
-			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
+			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
 		case 1:
 			SETUP_IOMUX_PADS(usdhc4_pads);
-			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
+			usdhc_cfg[2].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
 			break;
 		default:
 			printf("Warning: you configured more USDHC controllers"
@@ -308,28 +309,10 @@ static int ar8031_phy_fixup(struct phy_device *phydev)
 
 int board_phy_config(struct phy_device *phydev)
 {
-		if (phydev->drv->config)
+	ar8031_phy_fixup(phydev);
+
+	if (phydev->drv->config)
 		phydev->drv->config(phydev);
-
-	/* manually configure PHY as master during master-slave negotiation */
-	phy_write(phydev, MDIO_DEVAD_NONE, 0x9, 0x1c00);
-
-	/* control data pad skew */
-	ksz9031_phy_extended_write(phydev, 0x02,
-			MII_KSZ9031_EXT_RGMII_CTRL_SIG_SKEW,
-			MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x0000);
-	/* rx data pad skew */
-	ksz9031_phy_extended_write(phydev, 0x02,
-			MII_KSZ9031_EXT_RGMII_RX_DATA_SKEW,
-			MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x0000);
-	/* tx data pad skew */
-	ksz9031_phy_extended_write(phydev, 0x02,
-			MII_KSZ9031_EXT_RGMII_TX_DATA_SKEW,
-			MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x0000);
-	/* gtx and rx clock pad skew */
-	ksz9031_phy_extended_write(phydev, 0x02,
-			MII_KSZ9031_EXT_RGMII_CLOCK_SKEW,
-			MII_KSZ9031_MOD_DATA_NO_POST_INC, 0x03FF);
 
 	return 0;
 }
@@ -358,7 +341,7 @@ struct display_info_t const displays[] = {{
 	.addr	= 0,
 	.pixfmt	= IPU_PIX_FMT_RGB666,
 	.detect	= NULL,
-	.enable	= NULL,
+	.enable	= enable_lvds,
 	.mode	= {
 		.name           = "Hannstar-XGA",
 		.refresh        = 60,
@@ -398,7 +381,7 @@ struct display_info_t const displays[] = {{
 	.addr	= 0,
 	.pixfmt	= IPU_PIX_FMT_RGB24,
 	.detect	= NULL,
-	.enable	= NULL,
+	.enable	= enable_rgb,
 	.mode	= {
 		.name           = "SEIKO-WVGA",
 		.refresh        = 60,
@@ -423,7 +406,7 @@ static void setup_display(void)
 	int reg;
 
 	/* Setup HSYNC, VSYNC, DISP_CLK for debugging purposes */
-	/* SETUP_IOMUX_PADS(di0_pads); */
+	SETUP_IOMUX_PADS(di0_pads);
 
 	enable_ipu_clock();
 	imx_setup_hdmi();

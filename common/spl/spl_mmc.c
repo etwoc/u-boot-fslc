@@ -6,6 +6,7 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+#define DEBUG
 #include <common.h>
 #include <dm.h>
 #include <spl.h>
@@ -119,7 +120,7 @@ static int spl_mmc_find_device(struct mmc **mmcp, u32 boot_device)
 	struct udevice *dev;
 #endif
 	int err, mmc_dev;
-
+	puts("SPL:spl_mmc_find_device()\n");
 	mmc_dev = spl_mmc_get_device_index(boot_device);
 	if (mmc_dev < 0)
 		return mmc_dev;
@@ -287,7 +288,7 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 	u32 boot_mode;
 	int err = 0;
 	__maybe_unused int part;
-
+	puts("SPL:spl_mmc_load_image()\n");
 	err = spl_mmc_find_device(&mmc, bootdev->boot_device);
 	if (err)
 		return err;
@@ -299,7 +300,7 @@ int spl_mmc_load_image(struct spl_image_info *spl_image,
 #endif
 		return err;
 	}
-
+	puts("SPL:mmc has been initialise\n");
 	boot_mode = spl_boot_mode(bootdev->boot_device);
 	err = -EINVAL;
 	switch (boot_mode) {

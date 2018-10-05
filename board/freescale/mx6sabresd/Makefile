@@ -6,4 +6,4 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-y  := mx6sabresd.o
+obj-y  := mx6_sc200.o

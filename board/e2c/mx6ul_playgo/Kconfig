@@ -1,12 +1,12 @@
-if TARGET_MX6UL_SC100
+if TARGET_MX6UL_PLAYGO
 
 config SYS_BOARD
-	default "mx6ul_sc100"
+	default "mx6ul_playgo"
 
 config SYS_VENDOR
 	default "e2c"
 
 config SYS_CONFIG_NAME
-	default "mx6ul_sc100"
+	default "mx6ul_playgo"
 
 endif

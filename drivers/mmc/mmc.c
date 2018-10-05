@@ -153,7 +153,6 @@ void mmc_trace_state(struct mmc *mmc, struct mmc_cmd *cmd)
 int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 {
 	int ret;
-
 	mmmc_trace_before_send(mmc, cmd);
 	ret = mmc->cfg->ops->send_cmd(mmc, cmd, data);
 	mmmc_trace_after_send(mmc, cmd, ret);
@@ -1589,20 +1588,17 @@ static int mmc_send_if_cond(struct mmc *mmc)
 {
 	struct mmc_cmd cmd;
 	int err;
-
 	cmd.cmdidx = SD_CMD_SEND_IF_COND;
 	/* We set the bit if the host supports voltages between 2.7 and 3.6 V */
 	cmd.cmdarg = ((mmc->cfg->voltages & 0xff8000) != 0) << 8 | 0xaa;
 	cmd.resp_type = MMC_RSP_R7;
-
 	err = mmc_send_cmd(mmc, &cmd, NULL);
-
 	if (err)
 		return err;
 
 	if ((cmd.response[0] & 0xff) != 0xaa)
 		return -EOPNOTSUPP;
-	else
+	else 
 		mmc->version = SD_VERSION_2;
 
 	return 0;
@@ -1649,7 +1645,6 @@ int mmc_start_init(struct mmc *mmc)
 {
 	bool no_card;
 	int err;
-
 	/* we pretend there's no card when init is NULL */
 	no_card = mmc_getcd(mmc) == 0;
 #if !CONFIG_IS_ENABLED(DM_MMC)
@@ -1662,7 +1657,6 @@ int mmc_start_init(struct mmc *mmc)
 #endif
 		return -ENOMEDIUM;
 	}
-
 	if (mmc->has_init)
 		return 0;
 
@@ -1693,13 +1687,11 @@ int mmc_start_init(struct mmc *mmc)
 
 	/* The internal partition reset to user partition(0) at every CMD0*/
 	mmc_get_blk_desc(mmc)->hwpart = 0;
-
 	/* Test for SD version 2 */
 	err = mmc_send_if_cond(mmc);
-
 	/* Now try to get the SD card's operating condition */
 	err = sd_send_op_cond(mmc);
-
+	
 	/* If the command timed out, we check for an MMC card */
 	if (err == -ETIMEDOUT) {
 		err = mmc_send_op_cond(mmc);
@@ -1711,7 +1703,6 @@ int mmc_start_init(struct mmc *mmc)
 			return -EOPNOTSUPP;
 		}
 	}
-
 	if (!err)
 		mmc->init_in_progress = 1;
 
@@ -1721,7 +1712,6 @@ int mmc_start_init(struct mmc *mmc)
 static int mmc_complete_init(struct mmc *mmc)
 {
 	int err = 0;
-
 	mmc->init_in_progress = 0;
 	if (mmc->op_cond_pending)
 		err = mmc_complete_op_cond(mmc);
@@ -1751,7 +1741,6 @@ int mmc_init(struct mmc *mmc)
 
 	if (!mmc->init_in_progress)
 		err = mmc_start_init(mmc);
-
 	if (!err)
 		err = mmc_complete_init(mmc);
 	if (err)

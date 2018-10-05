@@ -282,6 +282,14 @@ config TARGET_MX6UL_14X14_EVK
 	select DM_THERMAL
 	select SUPPORT_SPL
 
+config TARGET_MX6UL_PLAYGO
+	select BOARD_LATE_INIT
+	bool "playgo"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+	select SUPPORT_SPL
+
 config TARGET_MX6UL_SC100
 	select BOARD_LATE_INIT
 	bool "sc100"
@@ -461,6 +469,7 @@ source "board/engicam/icorem6/Kconfig"
 source "board/engicam/icorem6_rqs/Kconfig"
 source "board/engicam/isiotmx6ul/Kconfig"
 source "board/e2c/mx6ul_sc100/Kconfig"
+source "board/e2c/mx6ul_playgo/Kconfig"
 source "board/e2c/mx6_sc200/Kconfig"
 source "board/freescale/mx6qarm2/Kconfig"
 source "board/freescale/mx6sabreauto/Kconfig"
