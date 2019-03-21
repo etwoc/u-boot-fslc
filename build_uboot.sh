@@ -14,6 +14,8 @@ elif [ "sc200" == "$1" ]; then
 	IMX6TYPE="mx6_sc200_defconfig"
 elif [ "playgo" == "$1" ]; then
 	IMX6TYPE="mx6ul_playgo_defconfig"
+elif [ "sc100_02" == "$1" ]; then
+	IMX6TYPE="mx6ul_sc100_02_defconfig"
 else
 	echo "No board selected"
 	exit 0

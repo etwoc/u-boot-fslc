@@ -298,6 +298,14 @@ config TARGET_MX6UL_SC100
 	select DM_THERMAL
 	select SUPPORT_SPL
 
+config TARGET_MX6UL_SC100_02
+	select BOARD_LATE_INIT
+	bool "sc100_02"
+	select MX6UL
+	select DM
+	select DM_THERMAL
+	select SUPPORT_SPL
+
 config TARGET_MX6_SC200
 	bool "mx6_sc200"
 	select BOARD_LATE_INIT
@@ -469,6 +477,7 @@ source "board/engicam/icorem6/Kconfig"
 source "board/engicam/icorem6_rqs/Kconfig"
 source "board/engicam/isiotmx6ul/Kconfig"
 source "board/e2c/mx6ul_sc100/Kconfig"
+source "board/e2c/mx6ul_sc100_02/Kconfig"
 source "board/e2c/mx6ul_playgo/Kconfig"
 source "board/e2c/mx6_sc200/Kconfig"
 source "board/freescale/mx6qarm2/Kconfig"

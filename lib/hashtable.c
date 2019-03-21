@@ -12,33 +12,32 @@
  *
  * SPDX-License-Identifier:	LGPL-2.1+
  */
-
 #include <errno.h>
 #include <malloc.h>
 
-#ifdef USE_HOSTCC		/* HOST build */
-# include <string.h>
-# include <assert.h>
-# include <ctype.h>
+#ifdef USE_HOSTCC /* HOST build */
+#include <string.h>
+#include <assert.h>
+#include <ctype.h>
 
-# ifndef debug
-#  ifdef DEBUG
-#   define debug(fmt,args...)	printf(fmt ,##args)
-#  else
-#   define debug(fmt,args...)
-#  endif
-# endif
-#else				/* U-Boot build */
-# include <common.h>
-# include <linux/string.h>
-# include <linux/ctype.h>
+#ifndef debug
+#ifdef DEBUG
+#define debug(fmt, args...) printf(fmt, ##args)
+#else
+#define debug(fmt, args...)
+#endif
+#endif
+#else /* U-Boot build */
+#include <common.h>
+#include <linux/string.h>
+#include <linux/ctype.h>
 #endif
 
-#ifndef	CONFIG_ENV_MIN_ENTRIES	/* minimum number of entries */
-#define	CONFIG_ENV_MIN_ENTRIES 64
+#ifndef CONFIG_ENV_MIN_ENTRIES /* minimum number of entries */
+#define CONFIG_ENV_MIN_ENTRIES 64
 #endif
-#ifndef	CONFIG_ENV_MAX_ENTRIES	/* maximum number of entries */
-#define	CONFIG_ENV_MAX_ENTRIES 512
+#ifndef CONFIG_ENV_MAX_ENTRIES /* maximum number of entries */
+#define CONFIG_ENV_MAX_ENTRIES 512
 #endif
 
 #include <env_callback.h>
@@ -57,14 +56,14 @@
  * which describes the current status.
  */
 
-typedef struct _ENTRY {
+typedef struct _ENTRY
+{
 	int used;
 	ENTRY entry;
 } _ENTRY;
 
-
 static void _hdelete(const char *key, struct hsearch_data *htab, ENTRY *ep,
-	int idx);
+					 int idx);
 
 /*
  * hcreate()
@@ -100,7 +99,8 @@ static int isprime(unsigned int number)
 int hcreate_r(size_t nel, struct hsearch_data *htab)
 {
 	/* Test for correct arguments.  */
-	if (htab == NULL) {
+	if (htab == NULL)
+	{
 		__set_errno(EINVAL);
 		return 0;
 	}
@@ -110,7 +110,7 @@ int hcreate_r(size_t nel, struct hsearch_data *htab)
 		return 0;
 
 	/* Change nel to the first prime number not smaller as nel. */
-	nel |= 1;		/* make odd */
+	nel |= 1; /* make odd */
 	while (!isprime(nel))
 		nel += 2;
 
@@ -118,14 +118,13 @@ int hcreate_r(size_t nel, struct hsearch_data *htab)
 	htab->filled = 0;
 
 	/* allocate memory and zero out */
-	htab->table = (_ENTRY *) calloc(htab->size + 1, sizeof(_ENTRY));
+	htab->table = (_ENTRY *)calloc(htab->size + 1, sizeof(_ENTRY));
 	if (htab->table == NULL)
 		return 0;
 
 	/* everything went alright */
 	return 1;
 }
-
 
 /*
  * hdestroy()
@@ -141,14 +140,17 @@ void hdestroy_r(struct hsearch_data *htab)
 	int i;
 
 	/* Test for correct arguments.  */
-	if (htab == NULL) {
+	if (htab == NULL)
+	{
 		__set_errno(EINVAL);
 		return;
 	}
 
 	/* free used memory */
-	for (i = 1; i <= htab->size; ++i) {
-		if (htab->table[i].used > 0) {
+	for (i = 1; i <= htab->size; ++i)
+	{
+		if (htab->table[i].used > 0)
+		{
 			ENTRY *ep = &htab->table[i].entry;
 
 			free((void *)ep->key);
@@ -198,16 +200,18 @@ void hdestroy_r(struct hsearch_data *htab)
  *   example for functions like hdelete().
  */
 
-int hmatch_r(const char *match, int last_idx, ENTRY ** retval,
-	     struct hsearch_data *htab)
+int hmatch_r(const char *match, int last_idx, ENTRY **retval,
+			 struct hsearch_data *htab)
 {
 	unsigned int idx;
 	size_t key_len = strlen(match);
 
-	for (idx = last_idx + 1; idx < htab->size; ++idx) {
+	for (idx = last_idx + 1; idx < htab->size; ++idx)
+	{
 		if (htab->table[idx].used <= 0)
 			continue;
-		if (!strncmp(match, htab->table[idx].entry.key, key_len)) {
+		if (!strncmp(match, htab->table[idx].entry.key, key_len))
+		{
 			*retval = &htab->table[idx].entry;
 			return idx;
 		}
@@ -223,19 +227,22 @@ int hmatch_r(const char *match, int last_idx, ENTRY ** retval,
  * is ENTER.  This is simply a helper function for hsearch_r().
  */
 static inline int _compare_and_overwrite_entry(ENTRY item, ACTION action,
-	ENTRY **retval, struct hsearch_data *htab, int flag,
-	unsigned int hval, unsigned int idx)
+											   ENTRY **retval, struct hsearch_data *htab, int flag,
+											   unsigned int hval, unsigned int idx)
 {
-	if (htab->table[idx].used == hval
-	    && strcmp(item.key, htab->table[idx].entry.key) == 0) {
+	if (htab->table[idx].used == hval && strcmp(item.key, htab->table[idx].entry.key) == 0)
+	{
 		/* Overwrite existing value? */
-		if ((action == ENTER) && (item.data != NULL)) {
+		if ((action == ENTER) && (item.data != NULL))
+		{
 			/* check for permission */
 			if (htab->change_ok != NULL && htab->change_ok(
-			    &htab->table[idx].entry, item.data,
-			    env_op_overwrite, flag)) {
+											   &htab->table[idx].entry, item.data,
+											   env_op_overwrite, flag))
+			{
 				debug("change_ok() rejected setting variable "
-					"%s, skipping it!\n", item.key);
+					  "%s, skipping it!\n",
+					  item.key);
 				__set_errno(EPERM);
 				*retval = NULL;
 				return 0;
@@ -243,10 +250,12 @@ static inline int _compare_and_overwrite_entry(ENTRY item, ACTION action,
 
 			/* If there is a callback, call it */
 			if (htab->table[idx].entry.callback &&
-			    htab->table[idx].entry.callback(item.key,
-			    item.data, env_op_overwrite, flag)) {
+				htab->table[idx].entry.callback(item.key,
+												item.data, env_op_overwrite, flag))
+			{
 				debug("callback() rejected setting variable "
-					"%s, skipping it!\n", item.key);
+					  "%s, skipping it!\n",
+					  item.key);
 				__set_errno(EINVAL);
 				*retval = NULL;
 				return 0;
@@ -254,7 +263,8 @@ static inline int _compare_and_overwrite_entry(ENTRY item, ACTION action,
 
 			free(htab->table[idx].entry.data);
 			htab->table[idx].entry.data = strdup(item.data);
-			if (!htab->table[idx].entry.data) {
+			if (!htab->table[idx].entry.data)
+			{
 				__set_errno(ENOMEM);
 				*retval = NULL;
 				return 0;
@@ -268,8 +278,8 @@ static inline int _compare_and_overwrite_entry(ENTRY item, ACTION action,
 	return -1;
 }
 
-int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
-	      struct hsearch_data *htab, int flag)
+int hsearch_r(ENTRY item, ACTION action, ENTRY **retval,
+			  struct hsearch_data *htab, int flag)
 {
 	unsigned int hval;
 	unsigned int count;
@@ -281,7 +291,8 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 	/* Compute an value for the given string. Perhaps use a better method. */
 	hval = len;
 	count = len;
-	while (count-- > 0) {
+	while (count-- > 0)
+	{
 		hval <<= 4;
 		hval += item.key[count];
 	}
@@ -297,19 +308,19 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 	/* The first index tried. */
 	idx = hval;
 
-	if (htab->table[idx].used) {
+	if (htab->table[idx].used)
+	{
 		/*
 		 * Further action might be required according to the
 		 * action value.
 		 */
 		unsigned hval2;
 
-		if (htab->table[idx].used == -1
-		    && !first_deleted)
+		if (htab->table[idx].used == -1 && !first_deleted)
 			first_deleted = idx;
 
 		ret = _compare_and_overwrite_entry(item, action, retval, htab,
-			flag, hval, idx);
+										   flag, hval, idx);
 		if (ret != -1)
 			return ret;
 
@@ -319,7 +330,8 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 		 */
 		hval2 = 1 + hval % (htab->size - 2);
 
-		do {
+		do
+		{
 			/*
 			 * Because SIZE is prime this guarantees to
 			 * step through all available indices.
@@ -338,20 +350,21 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 
 			/* If entry is found use it. */
 			ret = _compare_and_overwrite_entry(item, action, retval,
-				htab, flag, hval, idx);
+											   htab, flag, hval, idx);
 			if (ret != -1)
 				return ret;
-		}
-		while (htab->table[idx].used);
+		} while (htab->table[idx].used);
 	}
 
 	/* An empty bucket has been found. */
-	if (action == ENTER) {
+	if (action == ENTER)
+	{
 		/*
 		 * If table is full and another entry should be
 		 * entered return with error.
 		 */
-		if (htab->filled == htab->size) {
+		if (htab->filled == htab->size)
+		{
 			__set_errno(ENOMEM);
 			*retval = NULL;
 			return 0;
@@ -368,7 +381,8 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 		htab->table[idx].entry.key = strdup(item.key);
 		htab->table[idx].entry.data = strdup(item.data);
 		if (!htab->table[idx].entry.key ||
-		    !htab->table[idx].entry.data) {
+			!htab->table[idx].entry.data)
+		{
 			__set_errno(ENOMEM);
 			*retval = NULL;
 			return 0;
@@ -383,9 +397,11 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 
 		/* check for permission */
 		if (htab->change_ok != NULL && htab->change_ok(
-		    &htab->table[idx].entry, item.data, env_op_create, flag)) {
+										   &htab->table[idx].entry, item.data, env_op_create, flag))
+		{
 			debug("change_ok() rejected setting variable "
-				"%s, skipping it!\n", item.key);
+				  "%s, skipping it!\n",
+				  item.key);
 			_hdelete(item.key, htab, &htab->table[idx].entry, idx);
 			__set_errno(EPERM);
 			*retval = NULL;
@@ -394,10 +410,12 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 
 		/* If there is a callback, call it */
 		if (htab->table[idx].entry.callback &&
-		    htab->table[idx].entry.callback(item.key, item.data,
-		    env_op_create, flag)) {
+			htab->table[idx].entry.callback(item.key, item.data,
+											env_op_create, flag))
+		{
 			debug("callback() rejected setting variable "
-				"%s, skipping it!\n", item.key);
+				  "%s, skipping it!\n",
+				  item.key);
 			_hdelete(item.key, htab, &htab->table[idx].entry, idx);
 			__set_errno(EINVAL);
 			*retval = NULL;
@@ -414,7 +432,6 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
 	return 0;
 }
 
-
 /*
  * hdelete()
  */
@@ -426,7 +443,7 @@ int hsearch_r(ENTRY item, ACTION action, ENTRY ** retval,
  */
 
 static void _hdelete(const char *key, struct hsearch_data *htab, ENTRY *ep,
-	int idx)
+					 int idx)
 {
 	/* free used ENTRY */
 	debug("hdelete: DELETING key \"%s\"\n", key);
@@ -449,25 +466,30 @@ int hdelete_r(const char *key, struct hsearch_data *htab, int flag)
 	e.key = (char *)key;
 
 	idx = hsearch_r(e, FIND, &ep, htab, 0);
-	if (idx == 0) {
+	if (idx == 0)
+	{
 		__set_errno(ESRCH);
-		return 0;	/* not found */
+		return 0; /* not found */
 	}
 
 	/* Check for permission */
 	if (htab->change_ok != NULL &&
-	    htab->change_ok(ep, NULL, env_op_delete, flag)) {
+		htab->change_ok(ep, NULL, env_op_delete, flag))
+	{
 		debug("change_ok() rejected deleting variable "
-			"%s, skipping it!\n", key);
+			  "%s, skipping it!\n",
+			  key);
 		__set_errno(EPERM);
 		return 0;
 	}
 
 	/* If there is a callback, call it */
 	if (htab->table[idx].entry.callback &&
-	    htab->table[idx].entry.callback(key, NULL, env_op_delete, flag)) {
+		htab->table[idx].entry.callback(key, NULL, env_op_delete, flag))
+	{
 		debug("callback() rejected deleting variable "
-			"%s, skipping it!\n", key);
+			  "%s, skipping it!\n",
+			  key);
 		__set_errno(EINVAL);
 		return 0;
 	}
@@ -522,15 +544,16 @@ int hdelete_r(const char *key, struct hsearch_data *htab, int flag)
 
 static int cmpkey(const void *p1, const void *p2)
 {
-	ENTRY *e1 = *(ENTRY **) p1;
-	ENTRY *e2 = *(ENTRY **) p2;
+	ENTRY *e1 = *(ENTRY **)p1;
+	ENTRY *e2 = *(ENTRY **)p2;
 
 	return (strcmp(e1->key, e2->key));
 }
 
 static int match_string(int flag, const char *str, const char *pat, void *priv)
 {
-	switch (flag & H_MATCH_METHOD) {
+	switch (flag & H_MATCH_METHOD)
+	{
 	case H_MATCH_IDENT:
 		if (strcmp(str, pat) == 0)
 			return 1;
@@ -541,45 +564,49 @@ static int match_string(int flag, const char *str, const char *pat, void *priv)
 		break;
 #ifdef CONFIG_REGEX
 	case H_MATCH_REGEX:
-		{
-			struct slre *slrep = (struct slre *)priv;
-			struct cap caps[slrep->num_caps + 2];
+	{
+		struct slre *slrep = (struct slre *)priv;
+		struct cap caps[slrep->num_caps + 2];
 
-			if (slre_match(slrep, str, strlen(str), caps))
-				return 1;
-		}
-		break;
+		if (slre_match(slrep, str, strlen(str), caps))
+			return 1;
+	}
+	break;
 #endif
 	default:
 		printf("## ERROR: unsupported match method: 0x%02x\n",
-			flag & H_MATCH_METHOD);
+			   flag & H_MATCH_METHOD);
 		break;
 	}
 	return 0;
 }
 
 static int match_entry(ENTRY *ep, int flag,
-		 int argc, char * const argv[])
+					   int argc, char *const argv[])
 {
 	int arg;
 	void *priv = NULL;
 
-	for (arg = 0; arg < argc; ++arg) {
+	for (arg = 0; arg < argc; ++arg)
+	{
 #ifdef CONFIG_REGEX
 		struct slre slre;
 
-		if (slre_compile(&slre, argv[arg]) == 0) {
+		if (slre_compile(&slre, argv[arg]) == 0)
+		{
 			printf("Error compiling regex: %s\n", slre.err_str);
 			return 0;
 		}
 
 		priv = (void *)&slre;
 #endif
-		if (flag & H_MATCH_KEY) {
+		if (flag & H_MATCH_KEY)
+		{
 			if (match_string(flag, ep->key, argv[arg], priv))
 				return 1;
 		}
-		if (flag & H_MATCH_DATA) {
+		if (flag & H_MATCH_DATA)
+		{
 			if (match_string(flag, ep->data, argv[arg], priv))
 				return 1;
 		}
@@ -588,8 +615,8 @@ static int match_entry(ENTRY *ep, int flag,
 }
 
 ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
-		 char **resp, size_t size,
-		 int argc, char * const argv[])
+				  char **resp, size_t size,
+				  int argc, char *const argv[])
 {
 	ENTRY *list[htab->size];
 	char *res, *p;
@@ -597,21 +624,24 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 	int i, n;
 
 	/* Test for correct arguments.  */
-	if ((resp == NULL) || (htab == NULL)) {
+	if ((resp == NULL) || (htab == NULL))
+	{
 		__set_errno(EINVAL);
 		return (-1);
 	}
 
 	debug("EXPORT  table = %p, htab.size = %d, htab.filled = %d, size = %lu\n",
-	      htab, htab->size, htab->filled, (ulong)size);
+		  htab, htab->size, htab->filled, (ulong)size);
 	/*
 	 * Pass 1:
 	 * search used entries,
 	 * save addresses and compute total length
 	 */
-	for (i = 1, n = 0, totlen = 0; i <= htab->size; ++i) {
+	for (i = 1, n = 0, totlen = 0; i <= htab->size; ++i)
+	{
 
-		if (htab->table[i].used > 0) {
+		if (htab->table[i].used > 0)
+		{
 			ENTRY *ep = &htab->table[i].entry;
 			int found = match_entry(ep, flag, argc, argv);
 
@@ -625,12 +655,16 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 
 			totlen += strlen(ep->key) + 2;
 
-			if (sep == '\0') {
+			if (sep == '\0')
+			{
 				totlen += strlen(ep->data);
-			} else {	/* check if escapes are needed */
+			}
+			else
+			{ /* check if escapes are needed */
 				char *s = ep->data;
 
-				while (*s) {
+				while (*s)
+				{
 					++totlen;
 					/* add room for needed escape chars */
 					if ((*s == sep) || (*s == '\\'))
@@ -638,16 +672,17 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 					++s;
 				}
 			}
-			totlen += 2;	/* for '=' and 'sep' char */
+			totlen += 2; /* for '=' and 'sep' char */
 		}
 	}
 
 #ifdef DEBUG
 	/* Pass 1a: print unsorted list */
 	printf("Unsorted: n=%d\n", n);
-	for (i = 0; i < n; ++i) {
+	for (i = 0; i < n; ++i)
+	{
 		printf("\t%3d: %p ==> %-10s => %s\n",
-		       i, list[i], list[i]->key, list[i]->data);
+			   i, list[i], list[i]->key, list[i]->data);
 	}
 #endif
 
@@ -655,26 +690,34 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 	qsort(list, n, sizeof(ENTRY *), cmpkey);
 
 	/* Check if the user supplied buffer size is sufficient */
-	if (size) {
-		if (size < totlen + 1) {	/* provided buffer too small */
+	if (size)
+	{
+		if (size < totlen + 1)
+		{ /* provided buffer too small */
 			printf("Env export buffer too small: %lu, but need %lu\n",
-			       (ulong)size, (ulong)totlen + 1);
+				   (ulong)size, (ulong)totlen + 1);
 			__set_errno(ENOMEM);
 			return (-1);
 		}
-	} else {
+	}
+	else
+	{
 		size = totlen + 1;
 	}
 
 	/* Check if the user provided a buffer */
-	if (*resp) {
+	if (*resp)
+	{
 		/* yes; clear it */
 		res = *resp;
 		memset(res, '\0', size);
-	} else {
+	}
+	else
+	{
 		/* no, allocate and clear one */
 		*resp = res = calloc(1, size);
-		if (res == NULL) {
+		if (res == NULL)
+		{
 			__set_errno(ENOMEM);
 			return (-1);
 		}
@@ -683,7 +726,8 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 	 * Pass 2:
 	 * export sorted list of result data
 	 */
-	for (i = 0, p = res; i < n; ++i) {
+	for (i = 0, p = res; i < n; ++i)
+	{
 		const char *s;
 
 		s = list[i]->key;
@@ -693,19 +737,19 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 
 		s = list[i]->data;
 
-		while (*s) {
+		while (*s)
+		{
 			if ((*s == sep) || (*s == '\\'))
-				*p++ = '\\';	/* escape */
+				*p++ = '\\'; /* escape */
 			*p++ = *s++;
 		}
 		*p++ = sep;
 	}
-	*p = '\0';		/* terminate result */
+	*p = '\0'; /* terminate result */
 
 	return size;
 }
 #endif
-
 
 /*
  * himport()
@@ -715,7 +759,7 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
  * Check whether variable 'name' is amongst vars[],
  * and remove all instances by setting the pointer to NULL
  */
-static int drop_var_from_set(const char *name, int nvars, char * vars[])
+static int drop_var_from_set(const char *name, int nvars, char *vars[])
 {
 	int i = 0;
 	int res = 0;
@@ -724,11 +768,13 @@ static int drop_var_from_set(const char *name, int nvars, char * vars[])
 	if (nvars == 0)
 		return 1;
 
-	for (i = 0; i < nvars; i++) {
+	for (i = 0; i < nvars; i++)
+	{
 		if (vars[i] == NULL)
 			continue;
 		/* If we found it, delete all of them */
-		if (!strcmp(name, vars[i])) {
+		if (!strcmp(name, vars[i]))
+		{
 			vars[i] = NULL;
 			res = 1;
 		}
@@ -775,21 +821,23 @@ static int drop_var_from_set(const char *name, int nvars, char * vars[])
  */
 
 int himport_r(struct hsearch_data *htab,
-		const char *env, size_t size, const char sep, int flag,
-		int crlf_is_lf, int nvars, char * const vars[])
+			  const char *env, size_t size, const char sep, int flag,
+			  int crlf_is_lf, int nvars, char *const vars[])
 {
 	char *data, *sp, *dp, *name, *value;
 	char *localvars[nvars];
 	int i;
 
 	/* Test for correct arguments.  */
-	if (htab == NULL) {
+	if (htab == NULL)
+	{
 		__set_errno(EINVAL);
 		return 0;
 	}
 
 	/* we allocate new space to make sure we can write to the array */
-	if ((data = malloc(size + 1)) == NULL) {
+	if ((data = malloc(size + 1)) == NULL)
+	{
 		debug("himport_r: can't malloc %lu bytes\n", (ulong)size + 1);
 		__set_errno(ENOMEM);
 		return 0;
@@ -802,10 +850,11 @@ int himport_r(struct hsearch_data *htab,
 	if (nvars)
 		memcpy(localvars, vars, sizeof(vars[0]) * nvars);
 
-	if ((flag & H_NOCLEAR) == 0) {
+	if ((flag & H_NOCLEAR) == 0)
+	{
 		/* Destroy old hash table if one exists */
 		debug("Destroy Hash Table: %p table = %p\n", htab,
-		       htab->table);
+			  htab->table);
 		if (htab->table)
 			hdestroy_r(htab);
 	}
@@ -828,7 +877,8 @@ int himport_r(struct hsearch_data *htab,
 	 * be overwritten in the board config file if needed.
 	 */
 
-	if (!htab->table) {
+	if (!htab->table)
+	{
 		int nent = CONFIG_ENV_MIN_ENTRIES + size / 8;
 
 		if (nent > CONFIG_ENV_MAX_ENTRIES)
@@ -836,31 +886,36 @@ int himport_r(struct hsearch_data *htab,
 
 		debug("Create Hash Table: N=%d\n", nent);
 
-		if (hcreate_r(nent, htab) == 0) {
+		if (hcreate_r(nent, htab) == 0)
+		{
 			free(data);
 			return 0;
 		}
 	}
 
-	if (!size) {
+	if (!size)
+	{
 		free(data);
-		return 1;		/* everything OK */
+		return 1; /* everything OK */
 	}
-	if(crlf_is_lf) {
+	if (crlf_is_lf)
+	{
 		/* Remove Carriage Returns in front of Line Feeds */
 		unsigned ignored_crs = 0;
-		for(;dp < data + size && *dp; ++dp) {
-			if(*dp == '\r' &&
-			   dp < data + size - 1 && *(dp+1) == '\n')
+		for (; dp < data + size && *dp; ++dp)
+		{
+			if (*dp == '\r' &&
+				dp < data + size - 1 && *(dp + 1) == '\n')
 				++ignored_crs;
 			else
-				*(dp-ignored_crs) = *dp;
+				*(dp - ignored_crs) = *dp;
 		}
 		size -= ignored_crs;
 		dp = data;
 	}
 	/* Parse environment; allow for '\0' and 'sep' as separators */
-	do {
+	do
+	{
 		ENTRY e, *rv;
 
 		/* skip leading white space */
@@ -868,7 +923,8 @@ int himport_r(struct hsearch_data *htab,
 			++dp;
 
 		/* skip comment lines */
-		if (*dp == '#') {
+		if (*dp == '#')
+		{
 			while (*dp && (*dp != sep))
 				++dp;
 			++dp;
@@ -881,10 +937,11 @@ int himport_r(struct hsearch_data *htab,
 
 		/* deal with "name" and "name=" entries (delete var) */
 		if (*dp == '\0' || *(dp + 1) == '\0' ||
-		    *dp == sep || *(dp + 1) == sep) {
+			*dp == sep || *(dp + 1) == sep)
+		{
 			if (*dp == '=')
 				*dp++ = '\0';
-			*dp++ = '\0';	/* terminate name */
+			*dp++ = '\0'; /* terminate name */
 
 			debug("DELETE CANDIDATE: \"%s\"\n", name);
 			if (!drop_var_from_set(name, nvars, localvars))
@@ -895,18 +952,20 @@ int himport_r(struct hsearch_data *htab,
 
 			continue;
 		}
-		*dp++ = '\0';	/* terminate name */
+		*dp++ = '\0'; /* terminate name */
 
 		/* parse value; deal with escapes */
-		for (value = sp = dp; *dp && (*dp != sep); ++dp) {
+		for (value = sp = dp; *dp && (*dp != sep); ++dp)
+		{
 			if ((*dp == '\\') && *(dp + 1))
 				++dp;
 			*sp++ = *dp;
 		}
-		*sp++ = '\0';	/* terminate value */
+		*sp++ = '\0'; /* terminate value */
 		++dp;
 
-		if (*name == 0) {
+		if (*name == 0)
+		{
 			debug("INSERT: unable to use an empty key\n");
 			__set_errno(EINVAL);
 			free(data);
@@ -924,18 +983,19 @@ int himport_r(struct hsearch_data *htab,
 		hsearch_r(e, ENTER, &rv, htab, flag);
 		if (rv == NULL)
 			printf("himport_r: can't insert \"%s=%s\" into hash table\n",
-				name, value);
+				   name, value);
 
 		debug("INSERT: table %p, filled %d/%d rv %p ==> name=\"%s\" value=\"%s\"\n",
-			htab, htab->filled, htab->size,
-			rv, name, value);
-	} while ((dp < data + size) && *dp);	/* size check needed for text */
-						/* without '\0' termination */
+			  htab, htab->filled, htab->size,
+			  rv, name, value);
+	} while ((dp < data + size) && *dp); /* size check needed for text */
+										 /* without '\0' termination */
 	debug("INSERT: free(data = %p)\n", data);
 	free(data);
 
 	/* process variables which were not considered */
-	for (i = 0; i < nvars; i++) {
+	for (i = 0; i < nvars; i++)
+	{
 		if (localvars[i] == NULL)
 			continue;
 		/*
@@ -953,7 +1013,7 @@ int himport_r(struct hsearch_data *htab,
 	}
 
 	debug("INSERT: done\n");
-	return 1;		/* everything OK */
+	return 1; /* everything OK */
 }
 
 /*
@@ -969,8 +1029,10 @@ int hwalk_r(struct hsearch_data *htab, int (*callback)(ENTRY *))
 	int i;
 	int retval;
 
-	for (i = 1; i <= htab->size; ++i) {
-		if (htab->table[i].used > 0) {
+	for (i = 1; i <= htab->size; ++i)
+	{
+		if (htab->table[i].used > 0)
+		{
 			retval = callback(&htab->table[i].entry);
 			if (retval)
 				return retval;

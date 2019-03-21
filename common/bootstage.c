@@ -4,7 +4,6 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
-
 /*
  * This module records the progress of boot and arbitrary commands, and
  * permits accurate timestamping of each.
@@ -17,42 +16,46 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-enum {
+enum
+{
 	RECORD_COUNT = CONFIG_BOOTSTAGE_RECORD_COUNT,
 };
 
-struct bootstage_record {
+struct bootstage_record
+{
 	ulong time_us;
 	uint32_t start_us;
 	const char *name;
-	int flags;		/* see enum bootstage_flags */
+	int flags; /* see enum bootstage_flags */
 	enum bootstage_id id;
 };
 
-struct bootstage_data {
+struct bootstage_data
+{
 	uint rec_count;
 	uint next_id;
 	struct bootstage_record record[RECORD_COUNT];
 };
 
-enum {
-	BOOTSTAGE_VERSION	= 0,
-	BOOTSTAGE_MAGIC		= 0xb00757a3,
-	BOOTSTAGE_DIGITS	= 9,
+enum
+{
+	BOOTSTAGE_VERSION = 0,
+	BOOTSTAGE_MAGIC = 0xb00757a3,
+	BOOTSTAGE_DIGITS = 9,
 };
 
-struct bootstage_hdr {
-	uint32_t version;	/* BOOTSTAGE_VERSION */
-	uint32_t count;		/* Number of records */
-	uint32_t size;		/* Total data size (non-zero if valid) */
-	uint32_t magic;		/* Unused */
+struct bootstage_hdr
+{
+	uint32_t version; /* BOOTSTAGE_VERSION */
+	uint32_t count;   /* Number of records */
+	uint32_t size;	/* Total data size (non-zero if valid) */
+	uint32_t magic;   /* Unused */
 };
 
 int bootstage_relocate(void)
 {
 	struct bootstage_data *data = gd->bootstage;
 	int i;
-
 	/*
 	 * Duplicate all strings.  They may point to an old location in the
 	 * program .text section that can eventually get trashed.
@@ -65,13 +68,14 @@ int bootstage_relocate(void)
 }
 
 struct bootstage_record *find_id(struct bootstage_data *data,
-				 enum bootstage_id id)
+								 enum bootstage_id id)
 {
 	struct bootstage_record *rec;
 	struct bootstage_record *end;
 
 	for (rec = data->record, end = rec + data->rec_count; rec < end;
-	     rec++) {
+		 rec++)
+	{
 		if (rec->id == id)
 			return rec;
 	}
@@ -80,12 +84,13 @@ struct bootstage_record *find_id(struct bootstage_data *data,
 }
 
 struct bootstage_record *ensure_id(struct bootstage_data *data,
-				   enum bootstage_id id)
+								   enum bootstage_id id)
 {
 	struct bootstage_record *rec;
 
 	rec = find_id(data, id);
-	if (!rec && data->rec_count < RECORD_COUNT) {
+	if (!rec && data->rec_count < RECORD_COUNT)
+	{
 		rec = &data->record[data->rec_count++];
 		rec->id = id;
 		return rec;
@@ -95,7 +100,7 @@ struct bootstage_record *ensure_id(struct bootstage_data *data,
 }
 
 ulong bootstage_add_record(enum bootstage_id id, const char *name,
-			   int flags, ulong mark)
+						   int flags, ulong mark)
 {
 	struct bootstage_data *data = gd->bootstage;
 	struct bootstage_record *rec;
@@ -105,7 +110,8 @@ ulong bootstage_add_record(enum bootstage_id id, const char *name,
 
 	/* Only record the first event for each */
 	rec = find_id(data, id);
-	if (!rec && data->rec_count < RECORD_COUNT) {
+	if (!rec && data->rec_count < RECORD_COUNT)
+	{
 		rec = &data->record[data->rec_count++];
 		rec->time_us = mark;
 		rec->name = name;
@@ -119,7 +125,6 @@ ulong bootstage_add_record(enum bootstage_id id, const char *name,
 	return mark;
 }
 
-
 ulong bootstage_mark(enum bootstage_id id)
 {
 	return bootstage_add_record(id, NULL, 0, timer_get_boot_us());
@@ -128,7 +133,7 @@ ulong bootstage_mark(enum bootstage_id id)
 ulong bootstage_error(enum bootstage_id id)
 {
 	return bootstage_add_record(id, NULL, BOOTSTAGEF_ERROR,
-				    timer_get_boot_us());
+								timer_get_boot_us());
 }
 
 ulong bootstage_mark_name(enum bootstage_id id, const char *name)
@@ -174,7 +179,8 @@ uint32_t bootstage_start(enum bootstage_id id, const char *name)
 	struct bootstage_record *rec = ensure_id(data, id);
 	ulong start_us = timer_get_boot_us();
 
-	if (rec) {
+	if (rec)
+	{
 		rec->start_us = start_us;
 		rec->name = name;
 	}
@@ -205,7 +211,7 @@ uint32_t bootstage_accum(enum bootstage_id id)
  * @return pointer to name, either from the record or pointing to buf.
  */
 static const char *get_record_name(char *buf, int len,
-				   const struct bootstage_record *rec)
+								   const struct bootstage_record *rec)
 {
 	if (rec->name)
 		return rec->name;
@@ -221,10 +227,13 @@ static uint32_t print_time_record(struct bootstage_record *rec, uint32_t prev)
 {
 	char buf[20];
 
-	if (prev == -1U) {
+	if (prev == -1U)
+	{
 		printf("%11s", "");
 		print_grouped_ull(rec->time_us, BOOTSTAGE_DIGITS);
-	} else {
+	}
+	else
+	{
 		print_grouped_ull(rec->time_us, BOOTSTAGE_DIGITS);
 		print_grouped_ull(rec->time_us - prev, BOOTSTAGE_DIGITS);
 	}
@@ -270,7 +279,8 @@ static int add_bootstages_devicetree(struct fdt_header *blob)
 	 * Insert the timings to the device tree in the reverse order so
 	 * that they can be printed in the Linux kernel in the right order.
 	 */
-	for (recnum = data->rec_count - 1, i = 0; recnum >= 0; recnum--, i++) {
+	for (recnum = data->rec_count - 1, i = 0; recnum >= 0; recnum--, i++)
+	{
 		struct bootstage_record *rec = &data->record[recnum];
 		int node;
 
@@ -283,13 +293,13 @@ static int add_bootstages_devicetree(struct fdt_header *blob)
 
 		/* add properties to the node. */
 		if (fdt_setprop_string(blob, node, "name",
-				       get_record_name(buf, sizeof(buf), rec)))
+							   get_record_name(buf, sizeof(buf), rec)))
 			return -EINVAL;
 
 		/* Check if this is a 'mark' or 'accum' record */
 		if (fdt_setprop_cell(blob, node,
-				rec->start_us ? "accum" : "mark",
-				rec->time_us))
+							 rec->start_us ? "accum" : "mark",
+							 rec->time_us))
 			return -EINVAL;
 	}
 
@@ -313,7 +323,7 @@ void bootstage_report(void)
 	int i;
 
 	printf("Timer summary in microseconds (%d records):\n",
-	       data->rec_count);
+		   data->rec_count);
 	printf("%11s%11s  %s\n", "Mark", "Elapsed", "Stage");
 
 	prev = print_time_record(rec, 0);
@@ -321,17 +331,19 @@ void bootstage_report(void)
 	/* Sort records by increasing time */
 	qsort(data->record, data->rec_count, sizeof(*rec), h_compare_record);
 
-	for (i = 1, rec++; i < data->rec_count; i++, rec++) {
+	for (i = 1, rec++; i < data->rec_count; i++, rec++)
+	{
 		if (rec->id && !rec->start_us)
 			prev = print_time_record(rec, prev);
 	}
 	if (data->rec_count > RECORD_COUNT)
 		printf("Overflowed internal boot id table by %d entries\n"
-		       "- please increase CONFIG_BOOTSTAGE_RECORD_COUNT\n",
-		       data->rec_count - RECORD_COUNT);
+			   "- please increase CONFIG_BOOTSTAGE_RECORD_COUNT\n",
+			   data->rec_count - RECORD_COUNT);
 
 	puts("\nAccumulated time:\n");
-	for (i = 0, rec = data->record; i < data->rec_count; i++, rec++) {
+	for (i = 0, rec = data->record; i < data->rec_count; i++, rec++)
+	{
 		if (rec->start_us)
 			prev = print_time_record(rec, -1);
 	}
@@ -369,7 +381,8 @@ int bootstage_stash(void *base, int size)
 	uint32_t count;
 	int i;
 
-	if (hdr + 1 > (struct bootstage_hdr *)end) {
+	if (hdr + 1 > (struct bootstage_hdr *)end)
+	{
 		debug("%s: Not enough space for bootstage hdr\n", __func__);
 		return -ENOSPC;
 	}
@@ -379,7 +392,8 @@ int bootstage_stash(void *base, int size)
 
 	/* Count the number of records, and write that value first */
 	for (rec = data->record, i = count = 0; i < data->rec_count;
-	     i++, rec++) {
+		 i++, rec++)
+	{
 		if (rec->id != 0)
 			count++;
 	}
@@ -389,12 +403,14 @@ int bootstage_stash(void *base, int size)
 	ptr += sizeof(*hdr);
 
 	/* Write the records, silently stopping when we run out of space */
-	for (rec = data->record, i = 0; i < data->rec_count; i++, rec++) {
+	for (rec = data->record, i = 0; i < data->rec_count; i++, rec++)
+	{
 		append_data(&ptr, end, rec, sizeof(*rec));
 	}
 
 	/* Write the name strings */
-	for (rec = data->record, i = 0; i < data->rec_count; i++, rec++) {
+	for (rec = data->record, i = 0; i < data->rec_count; i++, rec++)
+	{
 		const char *name;
 
 		name = get_record_name(buf, sizeof(buf), rec);
@@ -402,7 +418,8 @@ int bootstage_stash(void *base, int size)
 	}
 
 	/* Check for buffer overflow */
-	if (ptr > end) {
+	if (ptr > end)
+	{
 		debug("%s: Not enough space for bootstage stash\n", __func__);
 		return -ENOSPC;
 	}
@@ -426,38 +443,45 @@ int bootstage_unstash(const void *base, int size)
 	if (size == -1)
 		end = (char *)(~(uintptr_t)0);
 
-	if (hdr + 1 > (struct bootstage_hdr *)end) {
+	if (hdr + 1 > (struct bootstage_hdr *)end)
+	{
 		debug("%s: Not enough space for bootstage hdr\n", __func__);
 		return -EPERM;
 	}
 
-	if (hdr->magic != BOOTSTAGE_MAGIC) {
+	if (hdr->magic != BOOTSTAGE_MAGIC)
+	{
 		debug("%s: Invalid bootstage magic\n", __func__);
 		return -ENOENT;
 	}
 
-	if (ptr + hdr->size > end) {
+	if (ptr + hdr->size > end)
+	{
 		debug("%s: Bootstage data runs past buffer end\n", __func__);
 		return -ENOSPC;
 	}
 
-	if (hdr->count * sizeof(*rec) > hdr->size) {
+	if (hdr->count * sizeof(*rec) > hdr->size)
+	{
 		debug("%s: Bootstage has %d records needing %lu bytes, but "
-			"only %d bytes is available\n", __func__, hdr->count,
-		      (ulong)hdr->count * sizeof(*rec), hdr->size);
+			  "only %d bytes is available\n",
+			  __func__, hdr->count,
+			  (ulong)hdr->count * sizeof(*rec), hdr->size);
 		return -ENOSPC;
 	}
 
-	if (hdr->version != BOOTSTAGE_VERSION) {
+	if (hdr->version != BOOTSTAGE_VERSION)
+	{
 		debug("%s: Bootstage data version %#0x unrecognised\n",
-		      __func__, hdr->version);
+			  __func__, hdr->version);
 		return -EINVAL;
 	}
 
-	if (data->rec_count + hdr->count > RECORD_COUNT) {
+	if (data->rec_count + hdr->count > RECORD_COUNT)
+	{
 		debug("%s: Bootstage has %d records, we have space for %d\n"
-			"- please increase CONFIG_BOOTSTAGE_USER_COUNT\n",
-		      __func__, hdr->count, RECORD_COUNT - data->rec_count);
+			  "- please increase CONFIG_BOOTSTAGE_USER_COUNT\n",
+			  __func__, hdr->count, RECORD_COUNT - data->rec_count);
 		return -ENOSPC;
 	}
 
@@ -470,7 +494,8 @@ int bootstage_unstash(const void *base, int size)
 	/* Read the name strings */
 	ptr += rec_size;
 	for (rec = data->record + data->next_id, i = 0; i < hdr->count;
-	     i++, rec++) {
+		 i++, rec++)
+	{
 		rec->name = ptr;
 
 		/* Assume no data corruption here */
@@ -499,7 +524,8 @@ int bootstage_init(bool first)
 		return -ENOMEM;
 	data = gd->bootstage;
 	memset(data, '\0', size);
-	if (first) {
+	if (first)
+	{
 		data->next_id = BOOTSTAGE_ID_USER;
 		bootstage_add_record(BOOTSTAGE_ID_AWAKE, "reset", 0, 0);
 	}
